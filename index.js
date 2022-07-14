@@ -9,7 +9,7 @@ II.     -Must scale in difficulty with each new level.
 III.    -Must look identical to the original Space Invaders.
 IV.     -The desktop version must have an option to rebind keys
 V.      -Must have a progressive skill system.
-VI.     -Must have a scrolling background.
+VI.     -Must have scrolling background elements (STRETCH include an illustrated background like space invaders)
 VII.    -Must have a particle effect system.
 
 STRETCH REQUIREMENTS ->
@@ -58,8 +58,9 @@ const main = () => {
     window.addEventListener('resize', ()=>{ scale = resizeDisplay(); });
 
     let previousTime = 0;
-    const keys = ['a','d','s'];
+    const keys = ['ArrowLeft','ArrowRight',' '];
     const controller = trackKeys(keys);
+    buildMobileControls(keys,controller);
     //For Testing Key Binding
     //document.getElementById('bind').addEventListener('click', () => { bindKeys(keys); });
 
@@ -70,8 +71,7 @@ const main = () => {
         const elapsed = timeStamp - previousTime;
         previousTime = timeStamp;
         //test
-        timer.innerHTML = `Frame Interval: ${elapsed} Image Scale: ${scale}`;
-        document.getElementById('input').innerHTML = `Keys: ${Object.entries(controller).join(', ')}`;
+
         //game logic
         if(playerOne){
             getInput(keys,controller,playerOne);
@@ -82,8 +82,6 @@ const main = () => {
         //drawing
         ctx.clearRect(0,0,display.width,display.height);
         ctx.scale(scale,scale);
-        //ctx.fillStyle = 'black';
-        //ctx.fillRect((display.width/2-10)/scale,(display.height/2-10)/scale,20,20);
         if(playerOne){
             playerOne.draw(scale);
             for(const missile of playerOne.missiles){
@@ -95,17 +93,12 @@ const main = () => {
     requestAnimationFrame(update);
 }
 
-//test time
-const timer = document.createElement('p');
-document.body.appendChild(timer);
-
-
 //GET PLAYER INPUT
 
 const trackKeys = (keys) => {
     let down = Object.create(null);
     const track = (event) => {
-        //event.preventDefault();
+        event.preventDefault();
         if(keys.includes(event.key)){
             down[event.key] = event.type == 'keydown';
         }
@@ -115,25 +108,22 @@ const trackKeys = (keys) => {
     return down;
 }
 
-//NEED TO REFACTOR FOR PRODUCTION
-const bindKeys = (keys) => {
-    const left = document.getElementById('control-left'),
-        right = document.getElementById('control-right'),
-        shoot = document.getElementById('control-shoot');
-    const keyObject = {
-        [left.value]:()=>{console.log('Go Left')},
-        [right.value]:()=>{console.log('Go Right')},
-        [shoot.value]:()=>{console.log('Shoot')}
-    };
-    keys[0] = left.value;
-    keys[1] = right.value;
-    keys[2] = shoot.value;
-}
-
 const getInput = (keys, controller, player) => {
     if(controller[keys[0]])player.move('left');
     if(controller[keys[1]])player.move('right');
     if(controller[keys[2]])player.shoot();;
+}
+
+const buildMobileControls = (keys, controller) => {
+    const left = document.getElementById('left-button');
+    const right = document.getElementById('right-button');
+    const shoot = document.getElementById('shoot-button');
+    left.ontouchstart = (event) => { controller[keys[0]] = true };
+    left.ontouchend = (event) => { controller[keys[0]] = false };
+    right.ontouchstart = (event) => { controller[keys[1]] = true };
+    right.ontouchend = (event) => { controller[keys[1]] = false };
+    shoot.ontouchstart = (event) => { controller[keys[2]] = true };
+    shoot.ontouchend = (event) => { controller[keys[2]] = false };
 }
 
 removeElement = (array, element) => {
@@ -148,11 +138,10 @@ class Ship{
         this.x = x;
         this.y = 240;
         this.health = 3;
-        this.speed = 2;
-        //this.canShoot = true;
+        this.speed = 1;
         this.missiles = [];
         this.missileCapacity = 1;
-        this.missileSpeed = 4;
+        this.missileSpeed = 3;
     }
     move(direction){
         if(direction == 'left') this.x -= this.speed;
@@ -188,3 +177,24 @@ class Missile{
 }
 
 main();
+
+// TESTING
+
+//KEY BINDING
+const bindKeys = (keys) => {
+    const left = document.getElementById('control-left'),
+        right = document.getElementById('control-right'),
+        shoot = document.getElementById('control-shoot');
+    const keyObject = {
+        [left.value]:()=>{console.log('Go Left')},
+        [right.value]:()=>{console.log('Go Right')},
+        [shoot.value]:()=>{console.log('Shoot')}
+    };
+    keys[0] = left.value;
+    keys[1] = right.value;
+    keys[2] = shoot.value;
+}
+
+//  PLAYER PARAMETERS
+
+//  CANVAS SCALING
