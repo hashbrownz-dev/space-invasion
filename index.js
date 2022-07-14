@@ -51,11 +51,21 @@ const resizeDisplay = () => {
     //return scale -> current / native
     return h / min;
 }
+const scaleDisplay = (scale) => {
+    //scale * native = current
+    display.height = 256 * scale;
+    display.width = (display.height/8) * 7;
+    return scale;
+}
 
 const main = () => {
     //initialize display...
     let scale = resizeDisplay();
     window.addEventListener('resize', ()=>{ scale = resizeDisplay(); });
+    document.getElementById('one').onclick = ()=> {scale = scaleDisplay(1)};
+    document.getElementById('one-point-five').onclick = ()=> {scale = scaleDisplay(1.5)};
+    document.getElementById('two').onclick = ()=> {scale = scaleDisplay(2)};
+    document.getElementById('two-point-five').onclick = ()=> {scale = scaleDisplay(2.5)};
 
     let previousTime = 0;
     const keys = ['ArrowLeft','ArrowRight',' '];
@@ -63,6 +73,8 @@ const main = () => {
     buildMobileControls(keys,controller);
 
     let playerOne = new Ship(105);
+    //TEST PLAYER
+    getPlayerParams(playerOne);
     const update = (timeStamp) => {
         requestAnimationFrame(update);
         if(!previousTime) previousTime = timeStamp;
@@ -72,6 +84,7 @@ const main = () => {
 
         //game logic
         if(playerOne){
+            playerOne.canShoot--;
             getInput(keys,controller,playerOne);
             for(const missile of playerOne.missiles){
                 missile.update();
@@ -124,10 +137,16 @@ const buildMobileControls = (keys, controller) => {
     shoot.ontouchend = (event) => { controller[keys[2]] = false };
 }
 
-removeElement = (array, element) => {
+const removeElement = (array, element) => {
     const index = array.indexOf(element);
     if(index > -1){
         array.splice(index,1);
+    }
+}
+
+const upgradePlayer = (player, upgrades) => {
+    for( const [key,value] of Object.entries(upgrades)){
+        player[key] = value;
     }
 }
 
@@ -140,6 +159,8 @@ class Ship{
         this.missiles = [];
         this.missileCapacity = 1;
         this.missileSpeed = 3;
+        this.rateOfFire = 15;
+        this.canShoot = 0;
     }
     move(direction){
         if(direction == 'left') this.x -= this.speed;
@@ -147,7 +168,10 @@ class Ship{
     }
     shoot(){
         if(this.missiles.length < this.missileCapacity){
-            this.missiles.push(new Missile(this.x + 7,this.y - 4,this.missileSpeed,this.missiles));
+            if(this.canShoot <= 0) {
+                this.missiles.push(new Missile(this.x + 7,this.y - 4,this.missileSpeed,this.missiles));
+                this.canShoot = this.rateOfFire;
+            }
         }
     }
     draw(scale){
@@ -174,8 +198,6 @@ class Missile{
     }
 }
 
-main();
-
 // TESTING
 
 //KEY BINDING
@@ -195,4 +217,25 @@ const bindKeys = (keys) => {
 
 //  PLAYER PARAMETERS
 
+const getPlayerParams = (player) => {
+    document.getElementById('update-player').onclick = () => {
+        upgradePlayer(player, {
+            speed: Number(document.getElementById('speed').value),
+            missileCapacity: Number(document.getElementById('missile-capacity').value),
+            missileSpeed: Number(document.getElementById('missile-speed').value),
+            rateOfFire: Number(document.getElementById('rate-of-fire').value)
+        });
+    }
+}
 //  CANVAS SCALING
+
+const testScaling = (scale) => {
+    //we need a way to affect the scale variable that gets passed into this function
+    document.getElementById('one').onclick = ()=> {scale = scaleDisplay(1)};
+    document.getElementById('one-point-five').onclick = ()=> {scale = scaleDisplay(1.5)};
+    document.getElementById('two').onclick = ()=> {scale = scaleDisplay(2)};
+    document.getElementById('two-point-five').onclick = ()=> {scale = scaleDisplay(2.5)};
+}
+
+//RUN
+main();
