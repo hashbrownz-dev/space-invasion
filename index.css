@@ -1,0 +1,12 @@
+#display{
+    border: 1px solid black;
+}
+.display-container{
+    height:100%;
+    width:fit-content;
+    margin:0 auto;
+}
+html, body{
+    margin: 0;
+    overflow: hidden;
+}
