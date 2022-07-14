@@ -15,12 +15,19 @@
             <canvas id = 'display' height = '256' width = '224'></canvas>
             <button type="button" id="shoot-button" class="control-button">SHOOT!</button>
         </div>
-        <!-- !!!FOR TESTING KEY BINDING!!!
-        <label for="control-left">Left:</label><input name="left" id="control-left" size="1">
-        <label for="control-left">Right:</label><input name="right" id="control-right" size="1">
-        <label for="control-shoot">Shoot:</label><input name="shoot" id="control-shoot" size="1">
-        <button type="button" id="bind">BIND</button>
-        -->
         <!--<p id = 'input'></p>-->
+        <fieldset id = 'scale-display'>
+            <legend>Scale Display</legend>
+            <button type="button" id="one">1x</button>
+            <button type="button" id="one-point-five">1.5x</button>
+            <button type="button" id="two">2x</button>
+            <button type="button" id="two-point-five">2.5x</button>
+        </fieldset>
+        <fieldset class = 'player-parameters'>
+            <legend>Player Parameters:</legend>
+            <label for="speed">Speed:</label><input type="number" id="speed">
+            <label for="missile-capacity">Missile Capacity:</label><input type="number" id="missile-capacity">
+            <label for="missile-speed">Missile Speed:</label><input type="number" id="missile-speed">
+        </fieldset>
     </body>
 </html>

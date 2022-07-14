@@ -61,8 +61,6 @@ const main = () => {
     const keys = ['ArrowLeft','ArrowRight',' '];
     const controller = trackKeys(keys);
     buildMobileControls(keys,controller);
-    //For Testing Key Binding
-    //document.getElementById('bind').addEventListener('click', () => { bindKeys(keys); });
 
     let playerOne = new Ship(105);
     const update = (timeStamp) => {
@@ -98,7 +96,7 @@ const main = () => {
 const trackKeys = (keys) => {
     let down = Object.create(null);
     const track = (event) => {
-        event.preventDefault();
+        //event.preventDefault();
         if(keys.includes(event.key)){
             down[event.key] = event.type == 'keydown';
         }
