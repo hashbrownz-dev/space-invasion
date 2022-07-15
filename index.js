@@ -198,6 +198,54 @@ class Missile{
     }
 }
 
+class Invaders{
+    constructor(startRow){
+        this.startRow = startRow;
+        this.invaders = '2D array composed of 5 "rows" of 11 invaders';
+        this.tick = 55; //this represents the invader to update each frane.
+        this.right = true; //boolean
+        this.descend;
+    }
+    move(){
+        //Math.ceil(tick / 11 = row)... 55 / 11 = 5 (5-1)
+        //tick % 11 = col... 55 % 11 = 0 54 % 11 = 10, 53 % 11 = 9... etc
+        //so if tick % 11 == 0... then you are starting a new row
+        //so when we are going through the row... we'll go through each index:
+        //in ASCENDING order 0-10 if we are going LEFT
+        //ignore 0... and then subtract 11 by tick % 11... 
+        //and DESCENDING order 10-0 if we are going RIGHT
+        //ignore 0... and then subtract 1 from tick % 11...
+        const row = Math.ceil(this.tick / 11) - 1;
+        let col, newX;
+        if(this.right){
+            newX = 2;
+            if(!(tick % 11)){
+                col = 10;
+            }else{
+                col = tick % 11 - 1;
+            }
+        }else{
+            newX = -2;
+            if(!(tick % 11)){
+                col = tick % 11;
+            }else{
+                col = 11 - (tick % 11);
+            }
+        }
+        const invader = this.invaders[row][col];
+        if(this.descend){
+            invader.move('y', 8);
+        } else {
+            invader.move('x', newX);
+        }
+        this.tick--;
+        if(tick<=0){
+            tick = 55;
+            if(this.descend) this.descend = false;
+        }
+    }
+}
+
 // TESTING
 
 //KEY BINDING
