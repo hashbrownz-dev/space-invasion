@@ -34,6 +34,9 @@ XI.     -SOUND EFFECTS
 const display = document.getElementById('display');
 const ctx = display.getContext('2d');
 
+const _gameHeight = 256;
+const _gameWidth = 224;
+
 const resizeDisplay = () => {
     //Get our viewport height: window.innerHeight...
     //our view ratio is 8:7...
@@ -73,6 +76,7 @@ const main = () => {
     buildMobileControls(keys,controller);
 
     let playerOne = new Ship(105);
+    let invaders = new Invaders(32);
     //TEST PLAYER
     getPlayerParams(playerOne);
     const update = (timeStamp) => {
@@ -90,6 +94,7 @@ const main = () => {
                 missile.update();
             }
         }
+        if(invaders) invaders.update();
         //drawing
         ctx.clearRect(0,0,display.width,display.height);
         ctx.scale(scale,scale);
@@ -98,6 +103,9 @@ const main = () => {
             for(const missile of playerOne.missiles){
                 missile.draw();
             }
+        }
+        if(invaders){
+            invaders.draw();
         }
         ctx.resetTransform();
     }
@@ -163,8 +171,14 @@ class Ship{
         this.canShoot = 0;
     }
     move(direction){
-        if(direction == 'left') this.x -= this.speed;
-        if(direction == 'right') this.x += this.speed;
+        if(direction == 'left'){
+             this.x -= this.speed;
+             if(this.x < 0)this.x = 0;
+        }
+        if(direction == 'right'){
+            this.x += this.speed;
+            if(this.x > _gameWidth - 15) this.x = _gameWidth - 15;
+        }
     }
     shoot(){
         if(this.missiles.length < this.missileCapacity){
@@ -199,14 +213,13 @@ class Missile{
 }
 
 class Invaders{
-    constructor(startRow){
-        this.startRow = startRow;
-        this.invaders = '2D array composed of 5 "rows" of 11 invaders';
+    constructor(startY){
+        this.invaders = spawnInvaders(startY);
         this.tick = 55; //this represents the invader to update each frane.
         this.right = true; //boolean
-        this.descend;
+        this.descend = false;
     }
-    move(){
+    update(){
         //Math.ceil(tick / 11 = row)... 55 / 11 = 5 (5-1)
         //tick % 11 = col... 55 % 11 = 0 54 % 11 = 10, 53 % 11 = 9... etc
         //so if tick % 11 == 0... then you are starting a new row
@@ -219,31 +232,109 @@ class Invaders{
         let col, newX;
         if(this.right){
             newX = 2;
-            if(!(tick % 11)){
+            if(!(this.tick % 11)){
                 col = 10;
             }else{
-                col = tick % 11 - 1;
+                col = this.tick % 11 - 1;
             }
         }else{
             newX = -2;
-            if(!(tick % 11)){
-                col = tick % 11;
+            if(!(this.tick % 11)){
+                col = this.tick % 11;
             }else{
-                col = 11 - (tick % 11);
+                col = 11 - (this.tick % 11);
             }
         }
         const invader = this.invaders[row][col];
+        //we should only descend when tick is 55...
+        //once we begin to descend... every invader must descend
+        //tick must go through ANOTHER cycle, before we switch direction
         if(this.descend){
             invader.move('y', 8);
         } else {
             invader.move('x', newX);
         }
         this.tick--;
-        if(tick<=0){
-            tick = 55;
-            if(this.descend) this.descend = false;
+        if(this.tick<=0){
+            this.tick = 55;
+            if(!this.descend){
+                if(this.isAtBoundary) this.descend = true;
+            } else {
+                this.descend = false;
+                if(this.right){
+                    this.right = false;
+                } else {
+                    this.right = true;
+                }
+            }
         }
     }
+    getColumn(col){
+        const column = [];
+        for(const row of this.invaders){
+            if(row[col]) column.push(row[col]);
+        }
+        return column;
+    }
+    getRow(row){
+        return this.invaders[row];
+    }
+    get isAtBoundary(){
+        let column;
+        if(this.right){
+            column = this.getColumn(10);
+            return column.every( (invader) => invader.x >= _gameWidth - 16 );
+        } else {
+            column = this.getColumn(0);
+            return column.every( (invader) => invader.x <= 0 );
+        }
+    }
+
+    draw(){
+        for(const row of this.invaders){
+            for( const invader of row){
+                invader.draw();
+            }
+        }
+    }
+}
+
+class Invader{
+    constructor(x,y){
+        this.x = x;
+        this.y = y;
+    }
+    move(axis,distance){
+        if(axis == 'x') this.x += distance;
+        if(axis == 'y') this.y += distance;
+    }
+    draw(){
+        //test draw routine...
+        //draw primitive
+        ctx.fillStyle = 'blue';
+        ctx.fillRect(this.x + 2, this.y, 12, 8);
+        //draw border
+        ctx.strokeStyle = 'lime';
+        ctx.strokeRect(this.x, this.y, 16, 8);
+    }
+}
+
+const spawnInvaders = (startY) => {
+    const startX = 16;
+    //populate a grid... 5 rows... 11 columns
+    //each individual grid must contain an invader with an x and y
+    //the x and y are based on their cell position
+    const invaders = [];
+    for(let r = 0; r < 5; r++){
+        const row = [];
+        for(let c = 0; c< 11; c++){
+            const x = startX + (16 * c);
+            const y = startY + (16 * r);
+            row.push(new Invader(x,y));
+        }
+        invaders.push(row);
+    }
+    return invaders;
 }
 
 // TESTING
