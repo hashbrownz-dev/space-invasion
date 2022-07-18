@@ -253,7 +253,7 @@ class Invaders{
             this.shoot(this.shooter);
         }
 
-        const row = Math.floor(this.tick / 11);
+        //const row = Math.floor(this.tick / 11);
         let newX = -2;
         if(this.right) newX = 2;
         const invader = this.nextInvader;
@@ -265,10 +265,7 @@ class Invaders{
                 invader.move('x', newX);
             }
             this.tick--;
-        }
-
-        if(this.tick<0){
-            this.tick = 54;
+        } else {
             if(!this.descend){
                 if(this.isAtBoundary) this.descend = true;
             } else {
@@ -279,6 +276,8 @@ class Invaders{
                     this.right = true;
                 }
             }
+            this.tick = 54;
+            this.update();
         }
     }
     getColumn(col){
@@ -323,6 +322,7 @@ class Invaders{
         return i;
     }
     get nextInvader(){
+        if(this.tick < 0)return false;
         const row = Math.floor(this.tick / 11);
         let col;
         if(this.right){
@@ -335,7 +335,6 @@ class Invaders{
             return invader;
         }else{
             this.tick--;
-            if(this.tick < 0)return false;
             return this.nextInvader;
         }
     }
