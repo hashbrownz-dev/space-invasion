@@ -93,9 +93,11 @@ const main = () => {
             for(const missile of playerOne.missiles){
                 missile.update();
             }
+            playerOne.checkForCollisions(invaders.missiles);
         }
-        if(invaders) {
+        if(!invaders.cleared) {
             invaders.update();
+            for(const missile of invaders.missiles) missile.update();
             invaders.checkForCollisions(playerOne.missiles);
         }
         //drawing
@@ -109,6 +111,7 @@ const main = () => {
         }
         if(invaders){
             invaders.draw();
+            for(const missile of invaders.missiles) missile.draw();
         }
         ctx.resetTransform();
     }
@@ -165,6 +168,8 @@ class Ship{
     constructor(x){
         this.x = x;
         this.y = 208;
+        this.w = 16;
+        this.h = 8;
         this.health = 3;
         this.speed = 1;
         this.missiles = [];
@@ -186,8 +191,15 @@ class Ship{
     shoot(){
         if(this.missiles.length < this.missileCapacity){
             if(this.canShoot <= 0) {
-                this.missiles.push(new Missile(this.x + 7,this.y - 4,this.missileSpeed,this.missiles));
+                this.missiles.push(new Missile(this.x + 7,this.y - 4,-this.missileSpeed,this.missiles));
                 this.canShoot = this.rateOfFire;
+            }
+        }
+    }
+    checkForCollisions(missiles){
+        for(const missile of missiles){
+            if(overlap(missile,this)){
+                removeElement(missiles, missile);
             }
         }
     }
@@ -206,8 +218,8 @@ class Missile{
         this.owner = owner;
     }
     update(){
-        this.y -= this.speed;
-        if(this.y < 0){
+        this.y += this.speed;
+        if(this.y < 0 || this.y > _gameHeight){
             //remove this from owner array.
             removeElement(this.owner, this);
         }
@@ -223,6 +235,8 @@ class Invaders{
         this.tick = 54; //this represents the invader to update each frane.
         this.right = true; //boolean
         this.descend = false;
+        this.missiles = [];
+        this.missileSpeed  = 2;
     }
     update(){
         //Math.ceil(tick / 11 = row)... 55 / 11 = 5 (5-1)
@@ -234,6 +248,11 @@ class Invaders{
         //and DESCENDING order 10-0 if we are going RIGHT
         //ignore 0... and then subtract 1 from tick % 11...
         //const row = Math.ceil(this.tick / 11) - 1;
+        //SHOOTER
+        if(!this.missiles.length){
+            this.shoot(this.shooter);
+        }
+
         const row = Math.floor(this.tick / 11);
         let newX = -2;
         if(this.right) newX = 2;
@@ -273,12 +292,24 @@ class Invaders{
         return this.grid[row];
     }
     get isAtBoundary(){
-        let column;
+        let column, c;
         if(this.right){
-            column = this.getColumn(10);
+            c = 10;
+            column = this.getColumn(c);
+            while(!column.length){
+                c--;
+                if(c<0)return false;
+                column = this.getColumn(c);
+            }
             return column.every( (invader) => invader.x >= _gameWidth - 16 );
         } else {
-            column = this.getColumn(0);
+            c = 0;
+            column = this.getColumn(c);
+            while(!column.length){
+                c++;
+                if(c>10)return false;
+                column = this.getColumn(c);
+            }
             return column.every( (invader) => invader.x <= 0 );
         }
     }
@@ -307,6 +338,22 @@ class Invaders{
             if(this.tick < 0)return false;
             return this.nextInvader;
         }
+    }
+    get cleared(){
+        if(!this.invaders.length) return true;
+        return false;
+    }
+    get shooter(){
+        const validColumns = [];
+        for(let c = this.grid[0].length - 1; c >= 0; c--){
+            const column = this.getColumn(c);
+            if(column.length) validColumns.push(column); 
+        }
+        const column = validColumns[Math.floor(Math.random() * validColumns.length)];
+        return column[column.length-1];
+    }
+    shoot(shooter){
+        this.missiles.push(new Missile(shooter.x + 8, shooter.y + 8, this.missileSpeed, this.missiles));
     }
     checkForCollisions(missiles){
         for(const missile of missiles){
