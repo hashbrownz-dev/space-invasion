@@ -161,7 +161,7 @@ const upgradePlayer = (player, upgrades) => {
 class Ship{
     constructor(x){
         this.x = x;
-        this.y = 240;
+        this.y = 208;
         this.health = 3;
         this.speed = 1;
         this.missiles = [];
@@ -214,8 +214,8 @@ class Missile{
 
 class Invaders{
     constructor(startY){
-        this.invaders = spawnInvaders(startY);
-        this.tick = 55; //this represents the invader to update each frane.
+        this.grid = spawnInvaders(startY);
+        this.tick = 54; //this represents the invader to update each frane.
         this.right = true; //boolean
         this.descend = false;
     }
@@ -228,24 +228,17 @@ class Invaders{
         //ignore 0... and then subtract 11 by tick % 11... 
         //and DESCENDING order 10-0 if we are going RIGHT
         //ignore 0... and then subtract 1 from tick % 11...
-        const row = Math.ceil(this.tick / 11) - 1;
+        //const row = Math.ceil(this.tick / 11) - 1;
+        const row = Math.floor(this.tick / 11);
         let col, newX;
         if(this.right){
             newX = 2;
-            if(!(this.tick % 11)){
-                col = 10;
-            }else{
-                col = this.tick % 11 - 1;
-            }
+            col = this.tick % 11;
         }else{
             newX = -2;
-            if(!(this.tick % 11)){
-                col = this.tick % 11;
-            }else{
-                col = 11 - (this.tick % 11);
-            }
+            col = 10 - this.tick % 11;
         }
-        const invader = this.invaders[row][col];
+        const invader = this.grid[row][col];
         //we should only descend when tick is 55...
         //once we begin to descend... every invader must descend
         //tick must go through ANOTHER cycle, before we switch direction
@@ -255,8 +248,8 @@ class Invaders{
             invader.move('x', newX);
         }
         this.tick--;
-        if(this.tick<=0){
-            this.tick = 55;
+        if(this.tick<0){
+            this.tick = 54;
             if(!this.descend){
                 if(this.isAtBoundary) this.descend = true;
             } else {
@@ -271,13 +264,13 @@ class Invaders{
     }
     getColumn(col){
         const column = [];
-        for(const row of this.invaders){
+        for(const row of this.grid){
             if(row[col]) column.push(row[col]);
         }
         return column;
     }
     getRow(row){
-        return this.invaders[row];
+        return this.grid[row];
     }
     get isAtBoundary(){
         let column;
@@ -289,12 +282,18 @@ class Invaders{
             return column.every( (invader) => invader.x <= 0 );
         }
     }
-
-    draw(){
-        for(const row of this.invaders){
-            for( const invader of row){
-                invader.draw();
+    get invaders(){
+        const i = [];
+        for(const row of this.grid){
+            for(const col of row){
+                if(col)i.push(col);
             }
+        }
+        return i;
+    }
+    draw(){
+        for(const invader of this.invaders){
+            invader.draw();
         }
     }
 }
