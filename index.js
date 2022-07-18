@@ -94,12 +94,15 @@ const main = () => {
                 missile.update();
             }
         }
-        if(invaders) invaders.update();
+        if(invaders) {
+            invaders.update();
+            invaders.checkForCollisions(playerOne.missiles);
+        }
         //drawing
         ctx.clearRect(0,0,display.width,display.height);
         ctx.scale(scale,scale);
         if(playerOne){
-            playerOne.draw(scale);
+            playerOne.draw();
             for(const missile of playerOne.missiles){
                 missile.draw();
             }
@@ -188,7 +191,7 @@ class Ship{
             }
         }
     }
-    draw(scale){
+    draw(){
         ctx.fillRect(this.x,this.y,15,8);
     }
 }
@@ -197,6 +200,8 @@ class Missile{
     constructor(x,y,speed,owner){
         this.x = x;
         this.y = y;
+        this.w = 1;
+        this.h = 4;
         this.speed = speed;
         this.owner = owner;
     }
@@ -208,7 +213,7 @@ class Missile{
         }
     }
     draw(scale){
-        ctx.fillRect(this.x,this.y,1,4);
+        ctx.fillRect(this.x,this.y,this.w,this.h);
     }
 }
 
@@ -230,24 +235,19 @@ class Invaders{
         //ignore 0... and then subtract 1 from tick % 11...
         //const row = Math.ceil(this.tick / 11) - 1;
         const row = Math.floor(this.tick / 11);
-        let col, newX;
-        if(this.right){
-            newX = 2;
-            col = this.tick % 11;
-        }else{
-            newX = -2;
-            col = 10 - this.tick % 11;
+        let newX = -2;
+        if(this.right) newX = 2;
+        const invader = this.nextInvader;
+
+        if(invader){
+            if(this.descend){
+                invader.move('y', 8);
+            } else {
+                invader.move('x', newX);
+            }
+            this.tick--;
         }
-        const invader = this.grid[row][col];
-        //we should only descend when tick is 55...
-        //once we begin to descend... every invader must descend
-        //tick must go through ANOTHER cycle, before we switch direction
-        if(this.descend){
-            invader.move('y', 8);
-        } else {
-            invader.move('x', newX);
-        }
-        this.tick--;
+
         if(this.tick<0){
             this.tick = 54;
             if(!this.descend){
@@ -291,6 +291,40 @@ class Invaders{
         }
         return i;
     }
+    get nextInvader(){
+        const row = Math.floor(this.tick / 11);
+        let col;
+        if(this.right){
+            col = this.tick % 11;
+        }else{
+            col = 10 - this.tick % 11;
+        }
+        const invader = this.grid[row][col];
+        if(invader){
+            return invader;
+        }else{
+            this.tick--;
+            if(this.tick < 0)return false;
+            return this.nextInvader;
+        }
+    }
+    checkForCollisions(missiles){
+        for(const missile of missiles){
+            for(let row = this.grid.length - 1; row >= 0; row--){
+                for(let col = this.grid[0].length - 1; col >= 0; col--){
+                    if(this.grid[row][col]){
+                        //check for collision
+                        const invader = this.grid[row][col].hitBox;
+                        if(overlap(missile,invader)){
+                            removeElement(missiles, missile);
+                            this.grid[row][col] = '';
+                            //removeElement(this.grid[row],invader);
+                        }
+                    }
+                }
+            }
+        }
+    }
     draw(){
         for(const invader of this.invaders){
             invader.draw();
@@ -299,19 +333,28 @@ class Invaders{
 }
 
 class Invader{
-    constructor(x,y){
+    constructor(x,y,w){
         this.x = x;
         this.y = y;
+        this.h = 8;
+        //w = [ 8, 11, 12]
+        this.w = w
     }
     move(axis,distance){
         if(axis == 'x') this.x += distance;
         if(axis == 'y') this.y += distance;
     }
+    get xOffset(){
+        return this.x + Math.floor((16 - this.w)/2);
+    }
+    get hitBox(){
+        return {x: this.xOffset, y:this.y, w:this.w, h:this.h };
+    }
     draw(){
         //test draw routine...
         //draw primitive
         ctx.fillStyle = 'blue';
-        ctx.fillRect(this.x + 2, this.y, 12, 8);
+        ctx.fillRect(this.xOffset, this.y, this.w, this.h);
         //draw border
         ctx.strokeStyle = 'lime';
         ctx.strokeRect(this.x, this.y, 16, 8);
@@ -329,11 +372,29 @@ const spawnInvaders = (startY) => {
         for(let c = 0; c< 11; c++){
             const x = startX + (16 * c);
             const y = startY + (16 * r);
-            row.push(new Invader(x,y));
+            let w;
+            if(r == 0) w = 8;
+            if(r > 0 && r < 3) w = 11;
+            if(r > 2) w = 12;
+            row.push(new Invader(x,y,w));
         }
         invaders.push(row);
     }
     return invaders;
+}
+
+//COLLISIONS
+
+function overlapX(a,b){
+    if(((a.x > b.x) && (a.x < b.x + b.w)) || ((a.x +a.w > b.x ) && (a.x + a.w < b.x + b.w))) return true;
+}
+
+function overlapY(a,b){
+    if(((a.y > b.y) && (a.y < b.y + b.h)) || ((a.y + a.h > b.y) && (a.y + a.h < b.y + b.h))) return true;
+}
+
+function overlap(a,b){
+    if( overlapX(a,b) && overlapY(a,b) ) return true;
 }
 
 // TESTING
