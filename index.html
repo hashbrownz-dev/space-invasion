@@ -15,21 +15,35 @@
             <canvas id = 'display' height = '256' width = '224'></canvas>
             <button type="button" id="shoot-button" class="control-button">SHOOT!</button>
         </div>
+        <!--    DEBUG    -->
         <!--<p id = 'input'></p>-->
-        <fieldset id = 'scale-display'>
-            <legend>Scale Display</legend>
-            <button type="button" id="one">1x</button>
-            <button type="button" id="one-point-five">1.5x</button>
-            <button type="button" id="two">2x</button>
-            <button type="button" id="two-point-five">2.5x</button>
-        </fieldset>
-        <fieldset class = 'player-parameters'>
-            <legend>Player Parameters</legend>
-            <label for="speed">Speed:</label><input type="number" id="speed" value="1">
-            <label for="missile-capacity">Missile Capacity:</label><input type="number" id="missile-capacity" value="1">
-            <label for="missile-speed">Missile Speed:</label><input type="number" id="missile-speed" value="2">
-            <label for="rate-of-fire">Rate of Fire:</label><input type="number" id="rate-of-fire" value="15">
-            <button type="button" id="update-player">UPDATE PLAYER</button>
-        </fieldset>
+        <div id = 'testing'>
+            <fieldset id = 'score-display'>
+                <legend>Score Display</legend>
+                <p id="score"></p>
+            </fieldset>
+            <fieldset id = 'scale-display' style = 'display:none'>
+                <legend>Scale Display</legend>
+                <button type="button" id="one">1x</button>
+                <button type="button" id="one-point-five">1.5x</button>
+                <button type="button" id="two">2x</button>
+                <button type="button" id="two-point-five">2.5x</button>
+            </fieldset>
+            <fieldset class = 'player-parameters' style = 'display:none'>
+                <legend>Player Parameters</legend>
+                <label for="speed">Speed:</label><input type="number" id="speed" value="1">
+                <label for="missile-capacity">Missile Capacity:</label><input type="number" id="missile-capacity" value="1">
+                <label for="missile-speed">Missile Speed:</label><input type="number" id="missile-speed" value="2">
+                <label for="rate-of-fire">Rate of Fire:</label><input type="number" id="rate-of-fire" value="15">
+                <button type="button" id="update-player">UPDATE PLAYER</button>
+            </fieldset>
+            <fieldset id = 'test-ufo' style = 'display:none'>
+                <legend>UFO Variables</legend>
+                <label for="ufo-timer">UFO Timer: </label><input type = 'text' disabled name="ufo-timer" id="ufo-timer" value="25000" size="5" maxlength="5">
+                <label for="ufo">UFO: </label><input type="text"disabled name="ufo" id="ufo" value="undefined" size="50">
+                <label for="ufo-speed">Speed:</label><input type="number" name="ufo-speed" id="ufo-speed" value="1">
+                <button type="button" id="spawn-ufo">Spawn UFO</button>
+            </fieldset>
+        </div>
     </body>
 </html>

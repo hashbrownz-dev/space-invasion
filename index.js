@@ -57,7 +57,7 @@ const scaleDisplay = (scale) => {
 
 const main = () => {
     //initialize display...
-    let scale = resizeDisplay();
+    let scale = scaleDisplay(2);
     window.addEventListener('resize', ()=>{ scale = resizeDisplay(); });
     document.getElementById('one').onclick = ()=> {scale = scaleDisplay(1)};
     document.getElementById('one-point-five').onclick = ()=> {scale = scaleDisplay(1.5)};
@@ -73,8 +73,14 @@ const main = () => {
     let invaders = new Invaders(32);
     let ufo;
     let ufoTimer = setUFOTimer();
+
+    let score = 0;
+    let lives = 3;
+
     //TEST PLAYER
     getPlayerParams(playerOne);
+    //END TESTS
+
     const update = (timeStamp) => {
         requestAnimationFrame(update);
         if(!previousTime) previousTime = timeStamp;
@@ -91,22 +97,26 @@ const main = () => {
             for(const missile of invaders.missiles){
                 if(playerOne.checkForCollisions(missile)){
                     removeElement(invaders.missiles, missile);
-                    //now we can kill our player and what not...
+                    lives--;
                 }
             }
         }
         ufoTimer-=elapsed;
+
         if(ufoTimer <= 0){
-            spawnUFO(4);
+            ufo = spawnUFO(1);
             ufoTimer = setUFOTimer();
         }
         if(ufo){
             ufo.update();
             for(const missile of playerOne.missiles){
                 if(ufo.checkForCollisions(missile)){
+                    score+=ufo.points;
                     ufo = undefined;
+                    removeElement(playerOne.missiles, missile);
                 }
             }
+            if(ufo.isOutOfBounds) ufo = undefined;
         }
         if(!invaders.cleared) {
             invaders.update();
@@ -114,8 +124,8 @@ const main = () => {
             for(const missile of playerOne.missiles){
                 const collision = invaders.checkForCollisions(missile);
                 if(collision){
+                    score+=collision.points;
                     removeElement(playerOne.missiles, missile);
-                    console.log(`Add ${collision.points} to SCORE`);
                 };
             }
         }
@@ -135,6 +145,8 @@ const main = () => {
         if(ufo){
             ufo.draw();
         }
+        //TEST SCORE
+        document.getElementById('score').innerHTML = `SCORE: ${displayScore(score)}`;
         ctx.resetTransform();
     }
     requestAnimationFrame(update);
@@ -436,15 +448,24 @@ class UFO{
         const pointValues = [50,100,150,200];
         return pointValues[Math.floor(Math.random()*4)];
     }
+    get isOutOfBounds(){
+        if(this.direction == 'right' && this.x > 200) return true;
+        if(this.direction == 'left' && this.x < 8) return true;
+        return false;
+    }
     update(){
-        if(this.direction == 'right') this.x += this.speed;
-        if(this.direction == 'left') this.x -= this.speed;
+        if(this.direction == 'right') {
+            this.x += this.speed;
+        }
+        if(this.direction == 'left') {
+            this.x -= this.speed;
+        }
     }
     checkForCollisions(missile){
         return overlap(missile,this.hitBox);
     }
     draw(){
-        const {x,y,w,h} = this.hitBox();
+        const {x,y,w,h} = this.hitBox;
         ctx.fillRect(x,y,w,h);
     }
 }
@@ -492,8 +513,8 @@ function overlap(a,b){
 
 //UI
 
-const displayScore = () => {
-    
+const displayScore = (score) => {
+    return String(score).padStart(6,'0');
 }
 
 // TESTING
@@ -533,6 +554,15 @@ const testScaling = (scale) => {
     document.getElementById('one-point-five').onclick = ()=> {scale = scaleDisplay(1.5)};
     document.getElementById('two').onclick = ()=> {scale = scaleDisplay(2)};
     document.getElementById('two-point-five').onclick = ()=> {scale = scaleDisplay(2.5)};
+}
+
+const getUFO = (ufo) => {
+    if(ufo){
+        const { direction, x, y, speed } = ufo;
+        return `Direction: ${direction}, Speed: ${speed}, X: ${x}, Y:${y}`
+    } else {
+        return `UNDEFINED`
+    }
 }
 
 //RUN
