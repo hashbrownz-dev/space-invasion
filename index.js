@@ -38,12 +38,7 @@ const _gameHeight = 256;
 const _gameWidth = 224;
 
 const resizeDisplay = () => {
-    //Get our viewport height: window.innerHeight...
-    //our view ratio is 8:7...
-    //so we divide our innerHeight by 8 and the multiply that result by 7
-    //i.e we multiply the quotient of innerHeight / 8 by seven...
-    //(innerHeight / 8) * 7 = width...
-    //const h = (window.innerHeight > 256) ? window.innerHeight : 256;
+    //our view ratio is 8:7
     const min = 256,
         max = 640;
     let h = window.innerHeight;
@@ -51,7 +46,6 @@ const resizeDisplay = () => {
     if(h > max) h = max;
     display.height = h;
     display.width = (h/8) * 7;
-    //return scale -> current / native
     return h / min;
 }
 const scaleDisplay = (scale) => {
@@ -86,7 +80,6 @@ const main = () => {
         if(!previousTime) previousTime = timeStamp;
         const elapsed = timeStamp - previousTime;
         previousTime = timeStamp;
-        //test
 
         //game logic
         if(playerOne){
@@ -101,6 +94,11 @@ const main = () => {
                     //now we can kill our player and what not...
                 }
             }
+        }
+        ufoTimer-=elapsed;
+        if(ufoTimer <= 0){
+            spawnUFO(4);
+            ufoTimer = setUFOTimer();
         }
         if(ufo){
             ufo.update();
@@ -120,7 +118,6 @@ const main = () => {
                     console.log(`Add ${collision.points} to SCORE`);
                 };
             }
-            //invaders.checkForCollisions(playerOne.missiles);
         }
         //drawing
         ctx.clearRect(0,0,display.width,display.height);
@@ -134,6 +131,9 @@ const main = () => {
         if(invaders){
             invaders.draw();
             for(const missile of invaders.missiles) missile.draw();
+        }
+        if(ufo){
+            ufo.draw();
         }
         ctx.resetTransform();
     }
@@ -238,7 +238,6 @@ class Missile{
     update(){
         this.y += this.speed;
         if(this.y < 0 || this.y > _gameHeight){
-            //remove this from owner array.
             removeElement(this.owner, this);
         }
     }
@@ -251,27 +250,17 @@ class Invaders{
     constructor(startY){
         this.grid = spawnInvaders(startY);
         this.tick = 54; //this represents the invader to update each frane.
-        this.right = true; //boolean
+        this.right = true;
         this.descend = false;
         this.missiles = [];
         this.missileSpeed  = 2;
     }
     update(){
-        //Math.ceil(tick / 11 = row)... 55 / 11 = 5 (5-1)
-        //tick % 11 = col... 55 % 11 = 0 54 % 11 = 10, 53 % 11 = 9... etc
-        //so if tick % 11 == 0... then you are starting a new row
-        //so when we are going through the row... we'll go through each index:
-        //in ASCENDING order 0-10 if we are going LEFT
-        //ignore 0... and then subtract 11 by tick % 11... 
-        //and DESCENDING order 10-0 if we are going RIGHT
-        //ignore 0... and then subtract 1 from tick % 11...
-        //const row = Math.ceil(this.tick / 11) - 1;
         //SHOOTER
         if(!this.missiles.length){
             this.shoot(this.shooter);
         }
 
-        //const row = Math.floor(this.tick / 11);
         let newX = -2;
         if(this.right) newX = 2;
         const invader = this.nextInvader;
@@ -376,7 +365,6 @@ class Invaders{
         for(let row = this.grid.length - 1; row >= 0; row--){
             for(let col = this.grid[0].length - 1; col >= 0; col--){
                 if(this.grid[row][col]){
-                    //check for collision
                     const invader = this.grid[row][col].hitBox;
                     if(overlap(missile,invader)){
                         this.grid[row][col] = '';
@@ -435,7 +423,7 @@ class UFO{
         this.direction = Math.round(Math.random()) ? 'left' : 'right';
         this.x = this.getX;
         this.y = 32;
-        this.speed = 6;
+        this.speed = speed;
     }
     get getX(){
         if(this.direction == 'right') return 8;
@@ -455,13 +443,14 @@ class UFO{
     checkForCollisions(missile){
         return overlap(missile,this.hitBox);
     }
+    draw(){
+        const {x,y,w,h} = this.hitBox();
+        ctx.fillRect(x,y,w,h);
+    }
 }
 
 const spawnInvaders = (startY) => {
     const startX = 16;
-    //populate a grid... 5 rows... 11 columns
-    //each individual grid must contain an invader with an x and y
-    //the x and y are based on their cell position
     const invaders = [];
     for(let r = 0; r < 5; r++){
         const row = [];
@@ -480,8 +469,7 @@ const spawnInvaders = (startY) => {
 }
 
 const spawnUFO = (speed) => {
-
-    return setUFOTimer();
+    return new UFO(speed);
 }
 
 const setUFOTimer = () => {
@@ -500,6 +488,12 @@ function overlapY(a,b){
 
 function overlap(a,b){
     if( overlapX(a,b) && overlapY(a,b) ) return true;
+}
+
+//UI
+
+const displayScore = () => {
+    
 }
 
 // TESTING
