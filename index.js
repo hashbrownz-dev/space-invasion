@@ -77,6 +77,8 @@ const main = () => {
 
     let playerOne = new Ship(105);
     let invaders = new Invaders(32);
+    let ufo;
+    let ufoTimer = setUFOTimer();
     //TEST PLAYER
     getPlayerParams(playerOne);
     const update = (timeStamp) => {
@@ -93,12 +95,32 @@ const main = () => {
             for(const missile of playerOne.missiles){
                 missile.update();
             }
-            playerOne.checkForCollisions(invaders.missiles);
+            for(const missile of invaders.missiles){
+                if(playerOne.checkForCollisions(missile)){
+                    removeElement(invaders.missiles, missile);
+                    //now we can kill our player and what not...
+                }
+            }
+        }
+        if(ufo){
+            ufo.update();
+            for(const missile of playerOne.missiles){
+                if(ufo.checkForCollisions(missile)){
+                    ufo = undefined;
+                }
+            }
         }
         if(!invaders.cleared) {
             invaders.update();
             for(const missile of invaders.missiles) missile.update();
-            invaders.checkForCollisions(playerOne.missiles);
+            for(const missile of playerOne.missiles){
+                const collision = invaders.checkForCollisions(missile);
+                if(collision){
+                    removeElement(playerOne.missiles, missile);
+                    console.log(`Add ${collision.points} to SCORE`);
+                };
+            }
+            //invaders.checkForCollisions(playerOne.missiles);
         }
         //drawing
         ctx.clearRect(0,0,display.width,display.height);
@@ -196,12 +218,8 @@ class Ship{
             }
         }
     }
-    checkForCollisions(missiles){
-        for(const missile of missiles){
-            if(overlap(missile,this)){
-                removeElement(missiles, missile);
-            }
-        }
+    checkForCollisions(missile){
+        if(overlap(missile,this)) return true;
     }
     draw(){
         ctx.fillRect(this.x,this.y,15,8);
@@ -354,18 +372,18 @@ class Invaders{
     shoot(shooter){
         this.missiles.push(new Missile(shooter.x + 8, shooter.y + 8, this.missileSpeed, this.missiles));
     }
-    checkForCollisions(missiles){
-        for(const missile of missiles){
-            for(let row = this.grid.length - 1; row >= 0; row--){
-                for(let col = this.grid[0].length - 1; col >= 0; col--){
-                    if(this.grid[row][col]){
-                        //check for collision
-                        const invader = this.grid[row][col].hitBox;
-                        if(overlap(missile,invader)){
-                            removeElement(missiles, missile);
-                            this.grid[row][col] = '';
-                            //removeElement(this.grid[row],invader);
-                        }
+    checkForCollisions(missile){
+        for(let row = this.grid.length - 1; row >= 0; row--){
+            for(let col = this.grid[0].length - 1; col >= 0; col--){
+                if(this.grid[row][col]){
+                    //check for collision
+                    const invader = this.grid[row][col].hitBox;
+                    if(overlap(missile,invader)){
+                        this.grid[row][col] = '';
+                        let points = 10;
+                        if(row < 3) points += 10;
+                        if(row < 1) points += 10;
+                        return {points:points};
                     }
                 }
             }
@@ -407,6 +425,38 @@ class Invader{
     }
 }
 
+//UFO's spawn every 25-30seconds... they travel approximately 4-6 pixels per frame and are worth either 50, 100, 150, or 200
+//points (according to the wiki)
+//There is a secret trick present in most iterations of the game that involves shooting the UFO on the players 23rd shot.
+//And shooting each subsequent UFO on the players 15th shot, the UFO will always give 300 points
+//They appear to spawn 1 row beneath the score (y:32) and can appear on any side of the screen which i believe is random.
+class UFO{
+    constructor(speed){
+        this.direction = Math.round(Math.random()) ? 'left' : 'right';
+        this.x = this.getX;
+        this.y = 32;
+        this.speed = 6;
+    }
+    get getX(){
+        if(this.direction == 'right') return 8;
+        if(this.direction == 'left')    return 200;
+    }
+    get hitBox(){
+        return {x:this.x,y:this.y,w:16,h:8};
+    }
+    get points(){
+        const pointValues = [50,100,150,200];
+        return pointValues[Math.floor(Math.random()*4)];
+    }
+    update(){
+        if(this.direction == 'right') this.x += this.speed;
+        if(this.direction == 'left') this.x -= this.speed;
+    }
+    checkForCollisions(missile){
+        return overlap(missile,this.hitBox);
+    }
+}
+
 const spawnInvaders = (startY) => {
     const startX = 16;
     //populate a grid... 5 rows... 11 columns
@@ -427,6 +477,15 @@ const spawnInvaders = (startY) => {
         invaders.push(row);
     }
     return invaders;
+}
+
+const spawnUFO = (speed) => {
+
+    return setUFOTimer();
+}
+
+const setUFOTimer = () => {
+    return 25000 + (1000 * Math.floor(Math.random() * 6));
 }
 
 //COLLISIONS
